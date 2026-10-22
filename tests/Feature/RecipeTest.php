@@ -11,34 +11,31 @@ class RecipeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_puede_instanciar_y_crear_una_receta_con_sus_ingredientes()
+    public function test_crear_y_consultar_receta_con_ingredientes_y_pivote()
     {
-        // 1. Crear una receta
-        $recipe = Recipe::create([
-            'titulo' => 'Pasta Carbonara',
-            'porciones' => 4,
-            'instrucciones' => 'Cocinar la pasta y mezclar con los huevos y el tocino.'
+        // 1. Crear la receta
+        $receta = Recipe::create([
+            'titulo' => 'Ensalada César',
+            'porciones' => 2,
+            'instrucciones' => 'Mezclar la lechuga con el aderezo, el pollo y el queso parmesano.'
         ]);
 
-        // 2. Crear los ingredientes
-        $ingredient1 = Ingredient::create(['nombre' => 'Espagueti']);
-        $ingredient2 = Ingredient::create(['nombre' => 'Tocino']);
+        // 2. Crear el ingrediente
+        $ingrediente = Ingredient::create(['nombre' => 'Lechuga Romana']);
 
-        // 3. Asociar los ingredientes a la receta utilizando la tabla pivote (con cantidad y unidad de medida)
-        $recipe->ingredients()->attach($ingredient1->id, [
-            'cantidad' => 400.00,
-            'unidadMedida' => 'gramos'
+        // 3. Adjuntar el ingrediente usando la tabla pivote con sus atributos específicos
+        $receta->ingredients()->attach($ingrediente->id, [
+            'cantidad' => 1.50,
+            'unidadMedida' => 'tazas'
         ]);
 
-        $recipe->ingredients()->attach($ingredient2->id, [
-            'cantidad' => 150.00,
-            'unidadMedida' => 'gramos'
-        ]);
-
-        // 4. Aserciones para verificar que todo se guardó y relacionó correctamente
-        $this->assertDatabaseHas('recipes', ['titulo' => 'Pasta Carbonara']);
-        $this->assertEquals(2, $recipe->ingredients()->count());
-        $this->assertEquals(400.00, $recipe->ingredients()->first()->pivot->cantidad);
-        $this->assertEquals('gramos', $recipe->ingredients()->first()->pivot->unidadMedida);
+        // 4. Verificaciones en base de datos y de relaciones Eloquent
+        $this->assertDatabaseHas('recipes', ['titulo' => 'Ensalada César']);
+        $this->assertDatabaseHas('ingredients', ['nombre' => 'Lechuga Romana']);
+        
+        $recetaRecuperada = Recipe::with('ingredients')->find($receta->id);
+        $this->assertEquals(1, $recetaRecuperada->ingredients->count());
+        $this->assertEquals('1.50', $recetaRecuperada->ingredients->first()->pivot->cantidad);
+        $this->assertEquals('tazas', $recetaRecuperada->ingredients->first()->pivot->unidadMedida);
     }
 }
