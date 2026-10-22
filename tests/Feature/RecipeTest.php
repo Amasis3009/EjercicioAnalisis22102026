@@ -11,31 +11,36 @@ class RecipeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_crear_y_consultar_receta_con_ingredientes_y_pivote()
+    public function test_receta_con_ingredientes_y_pivote()
     {
         // 1. Crear la receta
         $receta = Recipe::create([
-            'titulo' => 'Ensalada César',
-            'porciones' => 2,
-            'instrucciones' => 'Mezclar la lechuga con el aderezo, el pollo y el queso parmesano.'
+            'titulo' => 'Pastel de Chocolate',
+            'porciones' => 8,
+            'instrucciones' => 'Mezclar ingredientes, hornear a 180 grados por 45 minutos.'
         ]);
 
-        // 2. Crear el ingrediente
-        $ingrediente = Ingredient::create(['nombre' => 'Lechuga Romana']);
+        // 2. Crear los ingredientes
+        $harina = Ingredient::create(['nombre' => 'Harina de trigo']);
+        $cocoa = Ingredient::create(['nombre' => 'Cocoa en polvo']);
 
-        // 3. Adjuntar el ingrediente usando la tabla pivote con sus atributos específicos
-        $receta->ingredients()->attach($ingrediente->id, [
-            'cantidad' => 1.50,
-            'unidadMedida' => 'tazas'
+        // 3. Asociar los ingredientes a la receta mediante la tabla pivote
+        $receta->ingredients()->attach($harina->id, [
+            'cantidad' => 500.00,
+            'unidadMedida' => 'gramos'
         ]);
 
-        // 4. Verificaciones en base de datos y de relaciones Eloquent
-        $this->assertDatabaseHas('recipes', ['titulo' => 'Ensalada César']);
-        $this->assertDatabaseHas('ingredients', ['nombre' => 'Lechuga Romana']);
+        $receta->ingredients()->attach($cocoa->id, [
+            'cantidad' => 100.00,
+            'unidadMedida' => 'gramos'
+        ]);
+
+        // 4. Verificaciones y aserciones
+        $this->assertDatabaseHas('recipes', ['titulo' => 'Pastel de Chocolate']);
+        $this->assertDatabaseHas('ingredients', ['nombre' => 'Harina de trigo']);
         
-        $recetaRecuperada = Recipe::with('ingredients')->find($receta->id);
-        $this->assertEquals(1, $recetaRecuperada->ingredients->count());
-        $this->assertEquals('1.50', $recetaRecuperada->ingredients->first()->pivot->cantidad);
-        $this->assertEquals('tazas', $recetaRecuperada->ingredients->first()->pivot->unidadMedida);
+        $this->assertEquals(2, $receta->ingredients()->count());
+        $this->assertEquals(500.00, $receta->ingredients()->first()->pivot->cantidad);
+        $this->assertEquals('gramos', $receta->ingredients()->first()->pivot->unidadMedida);
     }
 }
